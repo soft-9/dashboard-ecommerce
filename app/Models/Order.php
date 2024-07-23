@@ -19,7 +19,7 @@ class Order extends Model
       'shipping_price',
       'notes',
     ];
-    public function customers() : BelongsTo{
+    public function customer() : BelongsTo{
       return $this->belongsTo(Customer::class);
     }
     public function items() :HasMany{

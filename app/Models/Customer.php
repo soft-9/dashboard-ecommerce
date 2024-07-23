@@ -12,7 +12,7 @@ class Customer extends Model
       'name',
       'email',
       'phone',
-      'data_of_birth',
+      'date_of_birth',
       'address',
       'zip_code',
       'city',

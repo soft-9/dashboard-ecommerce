@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
 use Filament\Forms\Set;
@@ -15,19 +14,19 @@ use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Section;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TernaryFilter;
-use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\ProductResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\ProductResource\RelationManagers;
+
 
 class ProductResource extends Resource
 {
@@ -36,7 +35,7 @@ class ProductResource extends Resource
   protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
   protected static ?string $navigationLabel = 'Products';
-
+  protected static ?int $navigationSort =  0 ;
   protected static ?string $navigationGroup = 'Shop';
   public static function form(Form $form): Form
   {
@@ -131,7 +130,11 @@ class ProductResource extends Resource
         SelectFilter::make('brand')->relationship('brand','name')
       ])
       ->actions([
-        Tables\Actions\EditAction::make(),
+        ActionGroup::make([
+          DeleteAction::make(),
+          ViewAction::make(),
+          Tables\Actions\EditAction::make(),
+        ])
       ])
       ->bulkActions([
         Tables\Actions\BulkActionGroup::make([
