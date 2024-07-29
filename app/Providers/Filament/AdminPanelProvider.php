@@ -36,6 +36,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Orange,
                 'Green' => Color::Orange,
             ])->font('Source Code Pro')
+            ->globalSearchKeyBindings(['ctrl+k','command+k'])
             ->favicon(asset('images/logo.svg'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

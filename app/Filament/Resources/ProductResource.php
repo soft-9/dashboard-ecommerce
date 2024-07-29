@@ -17,6 +17,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\ImageColumn;
@@ -24,19 +25,33 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TernaryFilter;
 use App\Filament\Resources\ProductResource\Pages;
-
 
 class ProductResource extends Resource
 {
   protected static ?string $model = Product::class;
-
   protected static ?string $navigationIcon = 'heroicon-o-bolt';
-
   protected static ?string $navigationLabel = 'Products';
-  protected static ?int $navigationSort =  0 ;
+  protected static ?int $navigationSort =  0;
   protected static ?string $navigationGroup = 'Shop';
+  protected static ?string $recordTitleAttribute = 'name';
+  protected static $int = 10;
+  public static function getGloballySearchableAttributes(): array
+  {
+    return ['name', 'slug', 'description', 'brand.name'];
+  }
+
+  public static function getGlobalSearchResultDetails(Model $record): array
+  {
+    return [
+      'Brand' => $record->brand->name,
+      'Price' => $record->price,
+      'Quantity' => $record->quantity,
+    ];
+  }
+
   public static function form(Form $form): Form
   {
     return $form
@@ -46,25 +61,25 @@ class ProductResource extends Resource
             Section::make()
               ->schema([
                 TextInput::make('name')
-                ->required()
-                ->live(debounce: 600) 
-                ->afterStateUpdated(function (string $operation, $state, Set $set) {
+                  ->required()
+                  ->live(debounce: 600)
+                  ->afterStateUpdated(function (string $operation, $state, Set $set) {
                     if ($operation !== 'create') {
-                        return;
+                      return;
                     }
                     $set('slug', Str::slug($state));
-                }),
-            TextInput::make('slug')
-                ->disabled()
-                ->dehydrated()
-                ->required()
-                ->unique(Product::class, 'slug', ignoreRecord: true),
+                  }),
+                TextInput::make('slug')
+                  ->disabled()
+                  ->dehydrated()
+                  ->required()
+                  ->unique(Product::class, 'slug', ignoreRecord: true),
               ])->columns(2),
             Section::make('Pricing & Inventory')
               ->schema([
                 TextInput::make('sku')->label("SKU (Stack keeping Unit)")->unique()->required(),
                 TextInput::make('price')->required()->numeric()
-                ->rules(['regex:/^\d+(\.\d{1,2})?$/']),
+                  ->rules(['regex:/^\d+(\.\d{1,2})?$/']),
                 TextInput::make('quantity')->required()->numeric()->minValue(0)->maxValue(100),
                 Select::make('type')
                   ->options([
@@ -78,29 +93,26 @@ class ProductResource extends Resource
             Section::make()
               ->schema([
                 Toggle::make('is_visible')
-                ->label('Visibility')->helperText('Enable or disable product visibility')->default(true),
+                  ->label('Visibility')->helperText('Enable or disable product visibility')->default(true),
                 Toggle::make('is_featured')
-                ->label('Featured')->helperText('Enable or disable products  featured status'),
+                  ->label('Featured')->helperText('Enable or disable product featured status'),
                 DatePicker::make('published_at')
-                ->label('Availability')->default(now()),
+                  ->label('Availability')->default(now()),
               ]),
-
             Section::make('Image')
               ->schema([
                 FileUpload::make('image')->directory('form-attachments')
-                ->preserveFilenames()
-                ->image()
-                ->required()
-                ->imageEditor(), // important method
+                  ->preserveFilenames()
+                  ->image()
+                  ->required()
+                  ->imageEditor(),
               ])->collapsible(),
-
             Section::make('Associations')
               ->schema([
                 Select::make('brand_id')
                   ->relationship('brand', 'name'),
               ])
           ]),
-
       ]);
   }
 
@@ -108,26 +120,30 @@ class ProductResource extends Resource
   {
     return $table
       ->columns([
-        ImageColumn::make('image'),
+        ImageColumn::make('image')
+          ->label('Image')
+          ->url(function ($record) {
+            return $record->image ? \Storage::url($record->image) : null;
+          }),
         TextColumn::make('name')
-        ->searchable()->sortable(),
+          ->searchable()->sortable(),
         TextColumn::make('brand.name')
-        ->searchable()->sortable()->toggleable(),
+          ->searchable()->sortable()->toggleable(),
         IconColumn::make('is_visible')->boolean()
-        ->sortable()->toggleable()->label('Visibility'),
+          ->sortable()->toggleable()->label('Visibility'),
         TextColumn::make('price')
-        ->searchable()->sortable(),
+          ->searchable()->sortable(),
         TextColumn::make('quantity')
-        ->searchable()->sortable(),
+          ->searchable()->sortable(),
         TextColumn::make('published_at')
-        ->date()->sortable(),
+          ->date()->sortable(),
         TextColumn::make('type'),
       ])
       ->filters([
         TernaryFilter::make('is_visible')->label('Visibility')->boolean()->trueLabel('Only Visible Products')
-        ->falseLabel('Only Hidden Products')
-        ->native(false),
-        SelectFilter::make('brand')->relationship('brand','name')
+          ->falseLabel('Only Hidden Products')
+          ->native(false),
+        SelectFilter::make('brand')->relationship('brand', 'name')
       ])
       ->actions([
         ActionGroup::make([
