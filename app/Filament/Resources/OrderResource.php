@@ -6,6 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Order;
 use App\Models\Product;
+use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enums\OrderStatusEnum;
@@ -21,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Components\MarkdownEditor;
@@ -36,7 +38,15 @@ class OrderResource extends Resource
 
   protected static ?int $navigationSort = 3;
   protected static ?string $navigationGroup = 'Shop';
+  public static function getNavigationBadge(): ?string
+  {
+    return static::getModel()::where('status', '=', 'processing')->count();
+  }
 
+  public static function getNavigationBadgeColor(): ?string
+  {
+    return static::getModel()::where('status', '=', 'processing')->count() > 10 ?  'warning' : 'primary';
+  }
   public static function form(Form $form): Form
   {
     return $form
@@ -46,18 +56,26 @@ class OrderResource extends Resource
             ->schema([
               TextInput::make('number')->default('OR-' . random_int(100000, 999999))->disabled()
                 ->dehydrated()->required(),
+
               Select::make('customer_id')->relationship('customer', 'name')
                 ->searchable()->required(),
+
+                TextInput::make('shipping_price')
+                  ->label('Shipping Costs')->dehydrated()->numeric()
+                  ->required(),
+
               Select::make('type')
                 ->options([
                   'pending' =>  OrderStatusEnum::PENDING->value,
                   'processing' =>  OrderStatusEnum::PROCESSING->value,
                   'completed' =>  OrderStatusEnum::COMPLETED->value,
                   'declined' =>  OrderStatusEnum::DECLINED->value,
-                ])->columnSpanFull()->required(),
+                ])->required(),
+
               MarkdownEditor::make('noted')
                 ->columnSpanFull()
             ])->columns(2),
+
           Step::make('Order Items')
             ->schema([
               Repeater::make('items')
@@ -65,11 +83,23 @@ class OrderResource extends Resource
                 ->schema([
 
                   Select::make('product_id')->label('Product')
-                    ->options(Product::query()->pluck('name', 'id')),
-                  TextInput::make('quantity')->numeric()->default(1)->required(),
+                    ->options(Product::query()->pluck('name', 'id'))->required()->reactive()
+                    ->afterStateUpdated(fn($state,Set $set)=>
+                      $set('unit_price', Product::find($state)?->price ?? 0),
+                    ),
+
+                  TextInput::make('quantity')->numeric()->default(1)->required()
+                    ->live()->dehydrated(),
+
                   TextInput::make('unit_price')->label('Unit Price')->disabled()
                     ->required()->dehydrated()->numeric(),
-                ])->columns(3)
+
+                  Placeholder::make('total_price')
+                    ->label('Total Price')
+                    ->content(function($get){
+                      return $get('quantity') * $get('unit_price');
+                    })
+                ])->columns(4)
             ])
         ])->columnSpanFull()
       ]);
@@ -82,9 +112,6 @@ class OrderResource extends Resource
         TextColumn::make('number')->searchable()->sortable(),
         TextColumn::make('customer.name')->toggleable()->searchable()->sortable(),
         TextColumn::make('status')->searchable()->sortable(),
-        TextColumn::make('total_price')->searchable()->sortable()->summarize([
-          Sum::make()->money()
-        ]),
         TextColumn::make('created_at')
           ->label('Order Date')->date(),
       ])
@@ -100,6 +127,7 @@ class OrderResource extends Resource
       ])
       ->bulkActions([
         Tables\Actions\BulkActionGroup::make([
+          ExportBulkAction::make(),
           Tables\Actions\DeleteBulkAction::make(),
         ]),
       ]);

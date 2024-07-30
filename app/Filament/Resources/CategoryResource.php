@@ -10,7 +10,6 @@ use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
-use App\Enums\ProductTypeEnum;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
@@ -21,17 +20,10 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\CategoryResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\CategoryResource\RelationManagers;
+use App\Filament\Resources\CategoryResource\RelationManagers\ProductsRelationManager;
 
 
 class CategoryResource extends Resource
@@ -42,6 +34,7 @@ class CategoryResource extends Resource
 
   protected static ?int $navigationSort = 4;
   protected static ?string $navigationGroup = 'Shop';
+  // protected static bool $shouldRegisterNavigation = false ; 
   public static function form(Form $form): Form
   {
     return $form
@@ -102,7 +95,7 @@ class CategoryResource extends Resource
   public static function getRelations(): array
   {
     return [
-      //
+      ProductsRelationManager::class
     ];
   }
 
