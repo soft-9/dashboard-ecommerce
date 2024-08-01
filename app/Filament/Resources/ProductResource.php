@@ -38,8 +38,9 @@ class ProductResource extends Resource
   protected static ?string $navigationGroup = 'Shop';
   protected static ?string $recordTitleAttribute = 'name';
   protected static int $globalSearchResultsLimit = 10;
-  protected static ?string $activeNavigationIcon= 'heroicon-o-check-badge';
-  public static function getNavigationBadge(): ?string{
+  protected static ?string $activeNavigationIcon = 'heroicon-o-check-badge';
+  public static function getNavigationBadge(): ?string
+  {
     return static::getModel()::count();
   }
   public static function getGloballySearchableAttributes(): array
@@ -55,7 +56,7 @@ class ProductResource extends Resource
       'Quantity' => $record->quantity,
     ];
   }
-  
+
   public static function form(Form $form): Form
   {
     return $form
@@ -115,8 +116,8 @@ class ProductResource extends Resource
               ->schema([
                 Select::make('brand_id')
                   ->relationship('brand', 'name')->required(),
-                  Select::make('categories')
-                    ->relationship('categories','name')->multiple()->required()
+                Select::make('categories')
+                  ->relationship('categories', 'name')->multiple()->required()
               ])
           ]),
       ]);
@@ -127,10 +128,11 @@ class ProductResource extends Resource
     return $table
       ->columns([
         ImageColumn::make('image')
-          ->label('Image')
-          ->url(function ($record) {
-            return $record->image ? \Storage::url($record->image) : null;
-          }),
+        ->label('Image')
+        ->url(function ($record) {
+            return $record->image ? asset('form-attachments/' . $record->image) : null;
+        }),
+    
         TextColumn::make('name')
           ->searchable()->sortable(),
         TextColumn::make('brand.name')

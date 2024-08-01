@@ -36,20 +36,22 @@ class AdminPanelProvider extends PanelProvider
         'primary' => Color::Indigo,
         'success' => Color::Emerald,
         'warning' => Color::Orange,
-        'Green' => Color::Orange,
-      ])->font('Source Code Pro')
+      ])
+      ->font('Source Code Pro')
       ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
       ->navigationItems([
         NavigationItem::make('Youtube')
           ->url('https://youtube.com')
-          ->openUrlInNewTab()->icon('heroicon-o-video-camera')
-          ->group('External')->sort(2)
+          ->openUrlInNewTab()
+          ->icon('heroicon-o-video-camera')
+          ->group('External')
+          ->sort(2),
       ])
       ->userMenuItems([
         MenuItem::make()
           ->Label('Settings')
           ->url('')->icon('heroicon-o-cog-6-tooth'),
-          'logout'=>MenuItem::make()
+        'logout' => MenuItem::make()
           ->label('Log Out')
       ])
       // ->breadcrumbs(false) default true
@@ -62,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
       ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
       ->widgets([
         Widgets\AccountWidget::class,
+        // Uncomment the next line to include the Filament Info Widget
         // Widgets\FilamentInfoWidget::class,
       ])
       ->middleware([
